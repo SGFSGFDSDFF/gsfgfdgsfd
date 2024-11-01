@@ -2,7 +2,7 @@ name: Create Venv and Run Script
 
 on:
   schedule:
-    - cron: '0 0 0 * *'  # 北京时间每天早上8点触发
+    - cron: '0 0 * * *'  # 北京时间每天早上8点触发
   workflow_dispatch:
 
 jobs:
