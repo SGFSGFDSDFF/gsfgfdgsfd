@@ -1,18 +1,36 @@
-from src import yolo_onnx
-from src import ver_onnx
-from src import utils
 import os
+from src import ver_onnx
+from src import yolo_onnx
+from src import utils
+
 
 class JYClick(object):
-    def __init__(self, per_path='pre_model_v6.onnx', yolo_path='best.onnx'):
+    def __init__(self, per_path='pre_model_v6.bin', yolo_path='best_v2.bin', sign=True):
+        """
+        jiyan 最好 pre_model_v3.onnx
+        nine 最好  pre_model_v5.onnx
+
+        """
         save_path = os.path.join(os.path.dirname(__file__))
         path = lambda a, b: os.path.join(a, b)
         per_path = path(save_path, per_path)
         yolo_path = path(save_path, yolo_path)
-        self.yolo = yolo_onnx.YOLOV5_ONNX(yolo_path, classes=['char', 'target'], providers=['CPUExecutionProvider'])
+        if sign:
+            try:
+                from src.load import decryption
+            except Exception as e:
+                raise Exception(e)
+            yolo_path = decryption(yolo_path)
+            per_path = decryption(per_path)
+        self.yolo = yolo_onnx.YOLOV5_ONNX(yolo_path, classes=['target', 'title', 'char'], providers=['CPUExecutionProvider'])
         self.pre = ver_onnx.PreONNX(per_path, providers=['CPUExecutionProvider'])
 
     def run(self, image_path):
+        """
+        检测
+        :param img: 图片的路径、二进制数据或图片矩阵
+        :return: list ---> [{'crop': [x1, y1, x2, y2], 'classes': ''}
+        """
         img = utils.open_image(image_path)
         data = self.yolo.decect(image_path)
         # 需要选择的字
@@ -42,7 +60,7 @@ class JYClick(object):
 
 
 if __name__ == '__main__':
-    image_path = "docs/res.jpg"
+    image_path = "../../docs/res.jpg"
     cap = JYClick()
     result = cap.run(image_path)
     print(result)
