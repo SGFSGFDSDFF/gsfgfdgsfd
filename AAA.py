@@ -7,11 +7,69 @@ from selenium import webdriver
 from src import jy_click
 import argparse
 import requests
+import zipfile
+import shutil
 import time
 import sys
+import io
 import os
 import re
 
+
+
+
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-u", "--username", help="用户名")
+parser.add_argument("-p", "--password", help="密码")
+args = parser.parse_args()
+
+
+if args.username and args.password:
+    username = args.username
+    password = args.password
+
+
+    # GitHub Release 下载链接
+    download_url = 'https://github.com/ayyayyayy2002/BilibiliAutoReport/releases/download/V4.0.0/default.zip'
+    proxies = {'http': None, 'https': None}
+    # 发起 GET 请求并下载文件内容
+    response = requests.get(url=download_url, proxies=proxies)
+
+    # 将文件内容写入内存中的 BytesIO 对象
+    zip_file = zipfile.ZipFile(io.BytesIO(response.content))
+
+    # 解压缩文件至脚本所在目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    extract_dir = os.path.join(current_dir, 'extracted')
+
+    if not os.path.exists(extract_dir):
+        os.makedirs(extract_dir)
+
+    if not os.path.exists(extract_dir):
+        os.makedirs(extract_dir)
+
+    # 逐个解压文件，并处理中文文件名编码问题
+    for file in zip_file.namelist():
+        try:
+            filename = file.encode('cp437').decode('gbk')
+            if filename.startswith('附加文件/') and filename.endswith('/'):
+                zip_file.extract(file, extract_dir)
+                os.rename(os.path.join(extract_dir, file), os.path.join(extract_dir, filename))
+        except UnicodeDecodeError:
+            pass
+
+    # 复制解压后的“附加文件”文件夹到当前目录
+    src_dir = os.path.join(extract_dir, '附加文件')
+    dest_dir = os.path.join(current_dir, '附加文件')
+    shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True)
+
+    print("文件已解压至脚本所在目录:", current_dir)
+else:
+    username = 'username'
+    password = 'password'
 
 
 def get_location(target):
@@ -29,20 +87,6 @@ def get_location(target):
     left_x = int(rect['left'])
     top_y = int(rect['top'])
     return left_x, top_y
-parser = argparse.ArgumentParser()
-parser.add_argument("-u", "--username", help="用户名")
-parser.add_argument("-p", "--password", help="密码")
-args = parser.parse_args()
-
-
-if args.username and args.password:
-    username = args.username
-    password = args.password
-else:
-    username = 'username'
-    password = 'password'
-
-
 
 proxies = {'http': None, 'https': None}
 base_dir = os.path.dirname(os.path.abspath(__file__))

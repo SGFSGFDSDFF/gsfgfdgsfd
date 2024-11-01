@@ -1,0 +1,42 @@
+name: Create Venv and Run Script
+
+on:
+  schedule:
+    - cron: '0 0 0 * *'  # 北京时间每天早上8点触发
+  workflow_dispatch:
+
+jobs:
+  setup-python:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+
+      - name: Activate virtual environment
+        run: |
+          .\venv\Scripts\Activate.ps1
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt  # 如果有requirements.txt文件，请替换成实际的依赖包列表
+
+      - name: 登录
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          python AAA.py -u $USERNAME -p $PASSWORD
+
+      - name: Run your script
+        run: |
+          python Start.py  # 替换成你想要运行的脚本文件名
